@@ -1,6 +1,7 @@
 import sys
 import pygame
 from settings import *
+from player import *
 
 pygame.init()
 
@@ -12,6 +13,7 @@ class App:
         self.running = True
         self.game_state = 'start_screen'  ################
         self.load_level()
+        self.player = Player(self, PLAYER_START_POS)
 
     def run(self):
         while self.running:
@@ -75,4 +77,5 @@ class App:
     def playing_draw(self):
         self.screen.blit(self.level, (0, TOP_BUFFER))
         self.grid()
+        self.player.draw()
         pygame.display.update()
