@@ -49,6 +49,6 @@ class Player:
 
     def can_move(self, dir):
         next_cell = self.app.map[int(self.grid_pos[0] + dir[0])%28][int(self.grid_pos[1] + dir[1])%30]
-        if next_cell == '1' or next_cell == '9':
+        if next_cell == 'W' or next_cell == 'G':
             return False
         return True

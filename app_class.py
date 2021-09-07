@@ -16,7 +16,11 @@ class App:
         self.game_state = 'start_screen'  ################
         self.player = Player(self, PLAYER_START_POS)
         self.map = []
+        self.heart_number = 0
+        self.eaten_hearts = 0
         self.load_level()
+        self.heart_image = self.load_heart_img()
+
 
     def run(self):
         while self.running:
@@ -34,11 +38,11 @@ class App:
         pygame.quit()
         sys.exit()
 
-    def draw_text(self, text, screen, size, colour):
+    def draw_text(self, text, screen, size, colour, x, y):
         font = pygame.font.SysFont('arial', size)
         text = font.render(text, False, colour)
         text_size = text.get_size()
-        screen.blit(text, (200, 200))
+        screen.blit(text, (x, y))
 
     def load_level(self):
         self.level = pygame.image.load("map.png")
@@ -51,6 +55,7 @@ class App:
                     r.append(char)
                 self.map.append(r)
         self.map = [*zip(*self.map)]
+        self.heart_number = self.count_hearts()
 
     def grid(self):
         for i in range(28):
@@ -59,11 +64,19 @@ class App:
         for i in range(31):
             pygame.draw.line(self.screen, (100, 100, 100), (0, i * CELL_HEIGHT + TOP_BUFFER),
                              (MAP_WIDTH, i * CELL_HEIGHT + TOP_BUFFER))
-        '''for wall in self.walls:
-            pygame.draw.rect(self.level, (87, 121, 255),
-                             (wall[0]*CELL_WIDTH+(3*CELL_WIDTH//8),
-                              wall[1]*CELL_HEIGHT+(3*CELL_HEIGHT//8),
-                              CELL_WIDTH//4, CELL_HEIGHT//4))'''
+        '''for i in range(len(self.map)):
+            for j in range(len(self.map[i])):
+                if self.map[i][j] == 'h':
+                    pygame.draw.rect(self.level, (255, 224, 185), (i*CELL_WIDTH, j*CELL_HEIGHT,
+                                                                   CELL_WIDTH, CELL_HEIGHT))'''
+
+    def load_heart_img(self):
+        heart = pygame.image.load("Heart.png")
+        heart = pygame.transform.scale(heart, (CELL_WIDTH//2, CELL_HEIGHT//2))
+        return heart
+
+    def count_hearts(self):
+        return sum(row.count('h') for row in self.map)
 # ---------------------------------------
 
     def start_events(self):
@@ -77,10 +90,17 @@ class App:
         pass
 
     def start_draw(self):
-        self.draw_text("PRESS ENTER", self.screen, 16, (170, 130, 50))
+        self.draw_text("PRESS ENTER", self.screen, 16, (170, 130, 50), 200, 200)
         pygame.display.update()
 
 # ---------------------------------------
+
+    def draw_hearts(self):
+        for i in range(len(self.map)):
+            for j in range(len(self.map[i])):
+                if self.map[i][j] == 'h':
+                    self.screen.blit(self.heart_image,
+                                     (i*CELL_WIDTH+CELL_WIDTH//4, j*CELL_HEIGHT+CELL_HEIGHT//4+TOP_BUFFER))
 
     def playing_events(self):
         for event in pygame.event.get():
@@ -100,7 +120,10 @@ class App:
         self.player.update()
 
     def playing_draw(self):
+        self.draw_text("Hearts 0/" + str(self.heart_number), self.screen, 18,
+                       (255, 255, 255), APP_WIDTH//3, TOP_BUFFER//3)
         self.screen.blit(self.level, (0, TOP_BUFFER))
         self.grid()
+        self.draw_hearts()
         self.player.draw()
         pygame.display.update()
