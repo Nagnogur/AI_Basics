@@ -3,6 +3,7 @@ import pygame
 from settings import *
 from player import *
 from spritesheet import *
+import numpy as np
 
 
 pygame.init()
@@ -15,9 +16,9 @@ class App:
         self.running = True
         self.game_state = 'start_screen'  ################
         self.player = Player(self, PLAYER_START_POS)
-        self.map = []
+        self.map = list()
         self.heart_number = 0
-        self.eaten_hearts = 0
+        self.picked_hearts = 0
         self.load_level()
         self.heart_image = self.load_heart_img()
 
@@ -54,7 +55,7 @@ class App:
                 for char in row:
                     r.append(char)
                 self.map.append(r)
-        self.map = [*zip(*self.map)]
+        self.map = np.array(self.map).T.tolist()
         self.heart_number = self.count_hearts()
 
     def grid(self):
@@ -120,7 +121,8 @@ class App:
         self.player.update()
 
     def playing_draw(self):
-        self.draw_text("Hearts 0/" + str(self.heart_number), self.screen, 18,
+        self.screen.fill((0, 0 ,0))
+        self.draw_text("Hearts {}/{}".format(self.picked_hearts, self.heart_number), self.screen, 18,
                        (255, 255, 255), APP_WIDTH//3, TOP_BUFFER//3)
         self.screen.blit(self.level, (0, TOP_BUFFER))
         self.grid()
