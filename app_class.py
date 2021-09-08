@@ -4,6 +4,7 @@ from settings import *
 from player import *
 from spritesheet import *
 import numpy as np
+from enemy import *
 
 
 pygame.init()
@@ -15,12 +16,14 @@ class App:
         self.clock = pygame.time.Clock()
         self.running = True
         self.game_state = 'start_screen'  ################
-        self.player = Player(self, PLAYER_START_POS)
         self.map = list()
+        self.enemies = []
         self.heart_number = 0
         self.picked_hearts = 0
         self.load_level()
         self.heart_image = self.load_heart_img()
+        self.player = Player(self, PLAYER_START_POS)
+        self.make_enemies()
 
 
     def run(self):
@@ -57,6 +60,10 @@ class App:
                 self.map.append(r)
         self.map = np.array(self.map).T.tolist()
         self.heart_number = self.count_hearts()
+
+    def make_enemies(self):
+        for i in range(NUMBER_OF_ENEMIES):
+            self.enemies.append(Enemy(self, ENEMY_START_POS[i], i))
 
     def grid(self):
         for i in range(28):
@@ -119,13 +126,18 @@ class App:
 
     def playing_update(self):
         self.player.update()
+        for i in range(NUMBER_OF_ENEMIES):
+            self.enemies[i].update()
+
 
     def playing_draw(self):
-        self.screen.fill((0, 0 ,0))
+        self.screen.fill((0, 0, 0))
         self.draw_text("Hearts {}/{}".format(self.picked_hearts, self.heart_number), self.screen, 18,
                        (255, 255, 255), APP_WIDTH//3, TOP_BUFFER//3)
         self.screen.blit(self.level, (0, TOP_BUFFER))
         self.grid()
         self.draw_hearts()
         self.player.draw()
+        for i in range(NUMBER_OF_ENEMIES):
+            self.enemies[i].draw()
         pygame.display.update()
