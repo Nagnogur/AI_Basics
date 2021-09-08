@@ -2,7 +2,6 @@ import sys
 import pygame
 from settings import *
 from player import *
-from spritesheet import *
 import numpy as np
 from enemy import *
 
