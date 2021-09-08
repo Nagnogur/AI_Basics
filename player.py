@@ -18,7 +18,9 @@ class Player:
                       (0, i*PLAYER_SPRITE_HEIGHT, PLAYER_SPRITE_WIDTH, PLAYER_SPRITE_HEIGHT))
             surf = pygame.transform.scale(surf, (PLAYER_WIDTH, PLAYER_HEIGHT))
             self.sprites.append(surf)
+        standing_sprite = self.sprites[0]
         del self.sprites[:2]
+        self.sprites.append(standing_sprite)
         self.dir = vec(-1, 0)
         self.stored_direction = None
         self.able_to_move = True
@@ -44,7 +46,10 @@ class Player:
             for j in range(len(self.sprites)):
                 self.sprites[j] = pygame.transform.flip(self.sprites[j], True, False)
             self.sprites_dir = self.dir.x
-        self.app.screen.blit(self.sprites[i % 14], self.pixel_pos)
+        if not self.able_to_move:
+            self.app.screen.blit(self.sprites[14], self.pixel_pos)
+        else:
+            self.app.screen.blit(self.sprites[i % 14], self.pixel_pos)
 
         '''pygame.draw.rect(self.app.screen, (200, 0, 0),
                          (self.grid_pos[0]*CELL_WIDTH,
