@@ -8,7 +8,8 @@ from enemy import *
 
 
 pygame.init()
-
+pygame.display.set_caption("Terra-Man")
+pygame.display.set_icon(pygame.image.load('Icon.png'))
 
 class App:
     def __init__(self):
@@ -44,7 +45,7 @@ class App:
                 self.victory_draw()
             else:
                 self.running = False
-            self.clock.tick(64)
+            self.clock.tick(60)
         pygame.quit()
         sys.exit()
 
