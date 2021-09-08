@@ -24,7 +24,7 @@ class App:
         self.heart_image = self.load_heart_img()
         self.player = Player(self, PLAYER_START_POS)
         self.make_enemies()
-
+        self.frame = 0
 
     def run(self):
         while self.running:
@@ -36,17 +36,26 @@ class App:
                 self.playing_events()
                 self.playing_update()
                 self.playing_draw()
+            elif self.game_state == 'game over':
+                self.game_over_events()
+                self.game_over_draw()
+            elif self.game_state == 'victory':
+                self.victory_events()
+                self.victory_draw()
             else:
                 self.running = False
-            self.clock.tick(60)
+            self.clock.tick(64)
         pygame.quit()
         sys.exit()
 
-    def draw_text(self, text, screen, size, colour, x, y):
+    def draw_text(self, text, screen, size, colour, x, y, centered):
         font = pygame.font.SysFont('arial', size)
         text = font.render(text, False, colour)
         text_size = text.get_size()
-        screen.blit(text, (x, y))
+        offset = [0, 0]
+        if centered:
+            offset = [text_size[0]//2, text_size[1]//2]
+        screen.blit(text, (x-offset[0], y-offset[1]))
 
     def load_level(self):
         self.level = pygame.image.load("map.png")
@@ -98,7 +107,8 @@ class App:
         pass
 
     def start_draw(self):
-        self.draw_text("PRESS ENTER", self.screen, 16, (170, 130, 50), 200, 200)
+        self.draw_text("PRESS ENTER", self.screen, 16, (170, 130, 50),
+                       APP_WIDTH//2, APP_HEIGHT//2, True)
         pygame.display.update()
 
 # ---------------------------------------
@@ -128,16 +138,45 @@ class App:
         self.player.update()
         for i in range(NUMBER_OF_ENEMIES):
             self.enemies[i].update()
-
+            if self.enemies[i].grid_pos == self.player.grid_pos:
+                self.game_state = 'game over'
+                return
+        if self.picked_hearts == self.heart_number:
+            self.game_state = 'victory'
 
     def playing_draw(self):
         self.screen.fill((0, 0, 0))
         self.draw_text("Hearts {}/{}".format(self.picked_hearts, self.heart_number), self.screen, 18,
-                       (255, 255, 255), APP_WIDTH//3, TOP_BUFFER//3)
+                       (255, 255, 255), APP_WIDTH//3, TOP_BUFFER//3, False)
         self.screen.blit(self.level, (0, TOP_BUFFER))
-        self.grid()
+        #self.grid()
         self.draw_hearts()
-        self.player.draw()
+        self.player.draw(int(self.frame))
         for i in range(NUMBER_OF_ENEMIES):
             self.enemies[i].draw()
         pygame.display.update()
+        self.frame = (self.frame + 0.5) % 14
+
+    def victory_draw(self):
+        self.screen.fill((0, 0, 0))
+        self.draw_text("Victory", self.screen, 26, (100, 255, 90), APP_WIDTH // 2, TOP_BUFFER, True)
+        self.draw_text("{} / {}".format(self.picked_hearts, self.heart_number),
+                       self.screen, 26, (255, 255, 255), APP_WIDTH // 2, APP_HEIGHT // 2, True)
+        pygame.display.update()
+
+    def victory_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
+
+    def game_over_draw(self):
+        self.screen.fill((0, 0, 0))
+        self.draw_text("GAME OVER", self.screen, 26, (255, 255, 255), APP_WIDTH//2, TOP_BUFFER, True)
+        self.draw_text("{} / {}".format(self.picked_hearts, self.heart_number),
+                       self.screen, 26, (255, 255, 255), APP_WIDTH//2, APP_HEIGHT//2, True)
+        pygame.display.update()
+
+    def game_over_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
