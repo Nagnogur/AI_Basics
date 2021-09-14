@@ -21,7 +21,7 @@ class Player:
         standing_sprite = self.sprites[0]
         del self.sprites[:2]
         self.sprites.append(standing_sprite)
-        self.dir = vec(-1, 0)
+        self.dir = vec(0, 0)
         self.stored_direction = None
         self.able_to_move = True
         self.speed = 1
@@ -42,6 +42,9 @@ class Player:
             self.pick_up_heart()
 
     def draw(self, i):
+        if self.dir == (0, 0):
+            self.app.screen.blit(self.sprites[14], self.pixel_pos)
+            return
         if self.dir.x != self.sprites_dir and self.dir.x != 0:
             for j in range(len(self.sprites)):
                 self.sprites[j] = pygame.transform.flip(self.sprites[j], True, False)
@@ -57,6 +60,8 @@ class Player:
 '''
 
     def move(self, dir):
+        if self.dir == (0, 0):
+            self.dir = dir
         self.stored_direction = dir
 
     def correct_pos(self):
