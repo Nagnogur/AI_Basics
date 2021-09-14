@@ -16,7 +16,7 @@ class Enemy:
         self.pixel_pos = vec(self.grid_pos.x * CELL_WIDTH - ENEMY_X_INDENT,
                              self.grid_pos.y * CELL_HEIGHT + TOP_BUFFER - ENEMY_Y_INDENT)
         self.sprite_sheet = ENEMY_SPRITES[self.enemy_class]
-        self.dir = vec(-1, 0)
+        self.dir = vec(0, 0)
         self.speed = 1
 
     def update(self):
@@ -26,7 +26,7 @@ class Enemy:
         if self.time_to_move():
             self.move()
         self.grid_pos[0] = ((self.pixel_pos[0] + ENEMY_WIDTH // 2) // CELL_WIDTH) % 28
-        self.grid_pos[1] = ((self.pixel_pos[1] - TOP_BUFFER + ENEMY_HEIGHT // 2) // CELL_WIDTH) % 30
+        self.grid_pos[1] = ((self.pixel_pos[1] - TOP_BUFFER + ENEMY_HEIGHT // 2) // CELL_WIDTH) % GRID_HEIGHT
 
     def draw(self):
         surf = pygame.Surface((ENEMY_SPRITE_WIDTH, ENEMY_SPRITE_HEIGHT), pygame.SRCALPHA, 32)
@@ -41,6 +41,8 @@ class Enemy:
                           self.grid_pos[1]*CELL_HEIGHT + TOP_BUFFER, CELL_WIDTH, CELL_HEIGHT), 1)'''
 
     def time_to_move(self):
+        if self.dir == vec(0, 0):
+            return True
         if int(self.pixel_pos[0] + ENEMY_X_INDENT) % CELL_WIDTH == 0:
             if self.dir == vec(1, 0) or self.dir == vec(-1, 0):
                 return True
@@ -67,7 +69,7 @@ class Enemy:
             else:
                 x = 0
                 y = 1
-            next_cell = self.app.map[int(self.grid_pos[0] + x) % 28][int(self.grid_pos[1] + y) % 30]
+            next_cell = self.app.map[int(self.grid_pos[0] + x) % GRID_WIDTH][int(self.grid_pos[1] + y) % GRID_HEIGHT]
             if next_cell != 'W':
                 break
         return vec(x, y)

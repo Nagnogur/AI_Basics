@@ -12,8 +12,9 @@ class Path:
         self.dir = [(1, 0), (0, -1), (-1, 0),  (0, 1)]
         self.found = False
         self.st = [[], [], []]
-        self.algorithms = ['dfs', 'bfs', 'ucs', 'none']
+        self.algorithms = ['bfs', 'dfs', 'ucs', 'none']
         self.cur_alg = 0
+
 
     def change_alg(self):
         self.cur_alg = (self.cur_alg + 1) % len(self.algorithms)
@@ -33,11 +34,11 @@ class Path:
         for enemy_id in range(3):
             if self.algorithms[self.cur_alg] == 'none':
                 self.st[enemy_id] = []
-            elif self.algorithms[self.cur_alg] == 'dfs':
-                self.start_dfs(cur_row, cur_col, self.enemies[enemy_id].grid_pos[0],
-                               self.enemies[enemy_id].grid_pos[1], enemy_id)
             elif self.algorithms[self.cur_alg] == 'bfs':
                 self.start_bfs(cur_row, cur_col, self.enemies[enemy_id].grid_pos[0],
+                               self.enemies[enemy_id].grid_pos[1], enemy_id)
+            elif self.algorithms[self.cur_alg] == 'dfs':
+                self.start_dfs(cur_row, cur_col, self.enemies[enemy_id].grid_pos[0],
                                self.enemies[enemy_id].grid_pos[1], enemy_id)
 
     def start_dfs(self, cur_row, cur_col, target_row, target_col, enemy_id):
@@ -65,14 +66,16 @@ class Path:
         self.st[enemy_id] = self.bfs(cur_row, cur_col, target_row, target_col)
 
     def bfs(self, cur_row, cur_col, target_row, target_col):
+        flag = False
         q = queue.Queue()
+        used = [[False for i in range(GRID_HEIGHT)] for j in range(GRID_WIDTH)]
         q.put((cur_row, cur_col))
         path = []
-        used = [[False for i in range(GRID_HEIGHT)] for j in range(GRID_WIDTH)]
+        used[cur_row][cur_col] = True
         while not q.empty():
             current = q.get()
-            used[current[0]][current[1]] = True
             if current == (target_row, target_col):
+                flag = True
                 break
             else:
                 for i in self.dir:
@@ -80,7 +83,10 @@ class Path:
                     col = (current[1] + i[1]) % GRID_HEIGHT
                     if not used[row][col] and self.level[row][col] != 'W':
                         q.put((row, col))
+                        used[row][col] = True
                         path.append((current, (row, col)))
+        if flag == False:
+            return []
         target = (target_row, target_col)
         shortest = [target]
         while target != (cur_row, cur_col):

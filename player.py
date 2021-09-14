@@ -37,7 +37,7 @@ class Player:
                 self.dir = self.stored_direction
             self.able_to_move = self.can_move(self.dir)
         self.grid_pos[0] = ((self.pixel_pos[0] + PLAYER_WIDTH//2+PLAYER_X_INDENT) // CELL_WIDTH) % 28
-        self.grid_pos[1] = ((self.pixel_pos[1] - TOP_BUFFER + CELL_HEIGHT//2+PLAYER_Y_INDENT) // CELL_HEIGHT) % 30
+        self.grid_pos[1] = ((self.pixel_pos[1] - TOP_BUFFER + CELL_HEIGHT//2+PLAYER_Y_INDENT) // CELL_HEIGHT) % GRID_HEIGHT
         if self.on_heart_tile():
             self.pick_up_heart()
 
@@ -74,7 +74,7 @@ class Player:
         return False
 
     def can_move(self, dir):
-        next_cell = self.app.map[int(self.grid_pos[0] + dir[0])%28][int(self.grid_pos[1] + dir[1])%30]
+        next_cell = self.app.map[int(self.grid_pos[0] + dir[0])%GRID_WIDTH][int(self.grid_pos[1] + dir[1])%GRID_HEIGHT]
         if next_cell == 'W' or next_cell == 'G':
             return False
         return True
