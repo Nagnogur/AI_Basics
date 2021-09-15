@@ -80,14 +80,19 @@ class App:
 
     def load_level(self):
         # self.level = pygame.image.load("map.png")
-        ''' wall = [['0' for i in range(GRID_HEIGHT)] for j in range(GRID_WIDTH)]
-        for i in range(300):
+        wall = [['0' for i in range(GRID_HEIGHT)] for j in range(GRID_WIDTH)]
+        for i in range(GRID_WIDTH):
+            wall[i][0] = 'W'
+            wall[i][GRID_HEIGHT - 1] = 'W'
+        for i in range(GRID_HEIGHT):
+            if i != 15:
+                wall[0][i] = 'W'
+                wall[GRID_WIDTH - 1][i] = 'W'
+        for i in range(400):
             x = randrange(0, GRID_WIDTH)
             y = randrange(0, GRID_HEIGHT)
             if wall[x][y] != 'W':
                 wall[x][y] = 'W'
-            else:
-                i -= 1
         i = 4
         item = ['7', '6', '5', 'P']
         while i > 0:
@@ -98,9 +103,8 @@ class App:
                 i -= 1
         for i in range(GRID_WIDTH):
             for j in range(GRID_HEIGHT):
-                if wall[i][j] and random.random() > 0.25 == '0':
+                if wall[i][j] == '0' and random.random() > 0.25:
                     wall[i][j] = 'h'
-'''
         self.level = pygame.Surface((MAP_WIDTH, MAP_HEIGHT))
         self.level = pygame.transform.scale(self.level, (MAP_WIDTH, MAP_HEIGHT))
         with open('map1.txt') as level:
@@ -118,6 +122,7 @@ class App:
                     self.map[pos[0]][pos[1]] = 'W'
                 else:
                     self.map[pos[0]][pos[1]] = '0'
+        self.map = wall
         self.heart_number = self.count_hearts()
 
     def make_enemies(self):

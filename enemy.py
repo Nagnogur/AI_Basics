@@ -22,7 +22,7 @@ class Enemy:
     def update(self):
         self.pixel_pos += self.dir*self.speed
         self.pixel_pos[0] %= MAP_WIDTH
-        self.pixel_pos[1] %= MAP_HEIGHT
+        self.pixel_pos[1] %= MAP_HEIGHT + TOP_BUFFER
         if self.time_to_move():
             self.move()
         self.grid_pos[0] = ((self.pixel_pos[0] + ENEMY_WIDTH // 2) // CELL_WIDTH) % 28

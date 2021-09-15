@@ -40,6 +40,9 @@ class Path:
             elif self.algorithms[self.cur_alg] == 'dfs':
                 self.start_dfs(cur_row, cur_col, self.enemies[enemy_id].grid_pos[0],
                                self.enemies[enemy_id].grid_pos[1], enemy_id)
+            elif self.algorithms[self.cur_alg] == 'ucs':
+                self.start_ucs(cur_row, cur_col, self.enemies[enemy_id].grid_pos[0],
+                               self.enemies[enemy_id].grid_pos[1], enemy_id)
 
     def start_dfs(self, cur_row, cur_col, target_row, target_col, enemy_id):
         self.visited = [[False for i in range(GRID_HEIGHT)] for j in range(GRID_WIDTH)]
@@ -85,7 +88,7 @@ class Path:
                         q.put((row, col))
                         used[row][col] = True
                         path.append((current, (row, col)))
-        if flag == False:
+        if not flag:
             return []
         target = (target_row, target_col)
         shortest = [target]
@@ -95,3 +98,29 @@ class Path:
                     target = i[0]
                     shortest.insert(0, i[0])
         return shortest
+
+    def start_ucs(self, cur_row, cur_col, target_row, target_col, enemy_id):
+        self.st[enemy_id] = self.ucs(cur_row, cur_col, int(target_row), int(target_col))
+
+    def ucs(self, cur_row, cur_col, target_row, target_col):
+        path = 10000000
+        q = [[0, (cur_row, cur_col), [(cur_row, cur_col)]]]
+        used = [[False for i in range(GRID_HEIGHT)] for j in range(GRID_WIDTH)]
+        count = 0
+        while len(q) > 0:
+            q = sorted(q)
+            p = q[-1]
+            del q[-1]
+            p[0] *= -1
+            if (p[1][0], p[1][1]) == (target_row, target_col):
+                if path > p[0]:
+                    path = p[0]
+                return p[2]
+            for i in self.dir:
+                row = (p[1][0] + i[0]) % GRID_WIDTH
+                col = (p[1][1] + i[1]) % GRID_HEIGHT
+                if not used[row][col] and self.level[row][col] != 'W':
+                    q.append([p[0]*-1 - 1, (row, col), p[2] + [(row, col)]])
+                    used[row][col] = True
+            used[p[1][0]][p[1][1]] = True
+        return []
