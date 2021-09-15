@@ -15,16 +15,8 @@ class Path:
         self.algorithms = ['bfs', 'dfs', 'ucs', 'none']
         self.cur_alg = 0
 
-
     def change_alg(self):
         self.cur_alg = (self.cur_alg + 1) % len(self.algorithms)
-
-    def is_valid(self, row, col):
-        if self.visited[row][col]:
-            return False
-        if self.level[row][col] == 'W':
-            return False
-        return True
 
     def print(self):
         for i in self.st:

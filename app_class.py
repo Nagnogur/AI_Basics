@@ -1,4 +1,5 @@
 import sys
+import time
 from random import randrange
 
 import pygame
@@ -31,6 +32,7 @@ class App:
         self.path = Path(self.map, self.enemies)
         self.make_enemies()
         self.frame = 0
+        self.t = 0
 
     def run(self):
         while self.running:
@@ -115,13 +117,13 @@ class App:
                     r.append(char)
                 self.map.append(r)
         self.map = np.array(self.map).T.tolist()
-        for i in range(100):
+        '''for i in range(100):
             pos = (randrange(0, GRID_WIDTH), randrange(0, GRID_HEIGHT))
             if self.map[pos[0]][pos[1]] not in ['P', '5', '6', '7']:
                 if self.map[pos[0]][pos[1]] != 'W':
                     self.map[pos[0]][pos[1]] = 'W'
                 else:
-                    self.map[pos[0]][pos[1]] = '0'
+                    self.map[pos[0]][pos[1]] = '0' '''
         self.map = wall
         self.heart_number = self.count_hearts()
 
@@ -218,6 +220,7 @@ class App:
                     self.player.move(vec(0, 1))
                 if event.key == pygame.K_z:
                     self.path.change_alg()
+                    self.t = 0
 
     def draw_path(self, l):
         color = [(254, 255, 71), (78, 255, 72), (255, 116, 60)]
@@ -268,12 +271,16 @@ class App:
                 return
         if self.picked_hearts == self.heart_number:
             self.game_state = 'victory'
+        start = time.time()
         self.path.find_path(int(self.player.grid_pos[0]), int(self.player.grid_pos[1]))
+        self.t = max(time.time() - start, self.t)
+
 
     def playing_draw(self):
         self.screen.fill((0, 0, 0))
         self.draw_text("Hearts {}/{}".format(self.picked_hearts, self.heart_number), self.screen, 18,
                        (255, 255, 255), APP_WIDTH//3, TOP_BUFFER//3, False)
+        self.draw_text(str(self.t), self.screen, 18, (255, 255, 255), 0, 0, False)
         self.screen.blit(self.level, (0, TOP_BUFFER))
         self.make_level()
         self.grid()
