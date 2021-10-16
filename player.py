@@ -24,7 +24,7 @@ class Player:
         self.dir = vec(0, 0)
         self.stored_direction = None
         self.able_to_move = True
-        self.speed = 1
+        self.speed = 2
 
 
     def update(self):
@@ -35,6 +35,8 @@ class Player:
         if self.correct_pos():
             if self.stored_direction is not None:
                 self.dir = self.stored_direction
+                if self.app.firstheartpath:
+                    self.app.firstheartpath.pop(0)
             self.able_to_move = self.can_move(self.dir)
         self.grid_pos[0] = ((self.pixel_pos[0] + PLAYER_WIDTH//2+PLAYER_X_INDENT) // CELL_WIDTH) % 28
         self.grid_pos[1] = ((self.pixel_pos[1] - TOP_BUFFER + CELL_HEIGHT//2+PLAYER_Y_INDENT) // CELL_HEIGHT) % GRID_HEIGHT
@@ -81,12 +83,7 @@ class Player:
 
     def on_heart_tile(self):
         if self.app.map[int(self.grid_pos[0])][int(self.grid_pos[1])] == 'h':
-            if int(self.pixel_pos[0] + PLAYER_X_INDENT) % CELL_WIDTH == 0:
-                if self.dir == vec(1, 0) or self.dir == vec(-1, 0):
-                    return True
-            if int(self.pixel_pos[1]+TOP_BUFFER + PLAYER_Y_INDENT) % CELL_HEIGHT == 0:
-                if self.dir == vec(0, 1) or self.dir == vec(0, -1):
-                    return True
+            return True
         return False
 
     def pick_up_heart(self):
@@ -94,4 +91,5 @@ class Player:
         y = int(self.grid_pos[1])
         self.app.map[x][y] = '0'
         self.app.picked_hearts += 1
+        self.app.hearts_pos.remove((x, y))
 

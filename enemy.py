@@ -5,12 +5,19 @@ import random
 
 ENEMY_SPRITES = [pygame.image.load("Supreme_Calamitas.png"),
                  pygame.image.load("Supreme_Cataclysm.png"),
+                 pygame.image.load("Supreme_Catastrophe.png"),
+                 pygame.image.load("Supreme_Calamitas.png"),
+                 pygame.image.load("Supreme_Cataclysm.png"),
+                 pygame.image.load("Supreme_Catastrophe.png"),
+                 pygame.image.load("Supreme_Calamitas.png"),
+                 pygame.image.load("Supreme_Cataclysm.png"),
                  pygame.image.load("Supreme_Catastrophe.png")]
 
 
 class Enemy:
-    def __init__(self, app, pos, enemy_class):
+    def __init__(self, app, pos, enemy_id, enemy_class):
         self.app = app
+        self.id = enemy_id
         self.grid_pos = pos
         self.enemy_class = enemy_class
         self.pixel_pos = vec(self.grid_pos.x * CELL_WIDTH - ENEMY_X_INDENT,
@@ -52,7 +59,44 @@ class Enemy:
         return False
 
     def move(self):
-        self.dir = self.get_random_direction()
+        if self.enemy_class == 0:
+            self.dir = self.to_player_position()
+        elif self.enemy_class == 1:
+            self.dir = self.long_path_to_player()
+        elif self.enemy_class == 2:
+            self.dir = self.behind_player_position()
+        else:
+            self.dir = self.get_random_direction()
+
+    def to_player_position(self):
+        path = self.app.path.start_bfs(int(self.grid_pos[0]), int(self.grid_pos[1]),
+                                       int(self.app.player.grid_pos[0]), int(self.app.player.grid_pos[1]),
+                                       self.id)
+        if len(path) > 1:
+            path.pop(0)
+            return vec(path[0][0] - int(self.grid_pos[0]), path[0][1] - int(self.grid_pos[1]))
+        else:
+            return self.get_random_direction()
+
+    def behind_player_position(self):
+        path = self.app.path.astar(self.app.map, (int(self.grid_pos[0]), int(self.grid_pos[1])),
+                                   (int(self.app.player.grid_pos[0]), int(self.app.player.grid_pos[1])))
+        if path is not None and len(path) > 1:
+            path.pop(0)
+            return vec(path[0][0] - int(self.grid_pos[0]), path[0][1] - int(self.grid_pos[1]))
+        else:
+            return self.get_random_direction()
+
+    def long_path_to_player(self):
+        path = self.app.path.start_dfs(int(self.grid_pos[0]), int(self.grid_pos[1]),
+                                       int(self.app.player.grid_pos[0]), int(self.app.player.grid_pos[1]))
+
+        if len(path) > 1:
+            path.pop(0)
+            print(path[0])
+            return vec(path[0][0] - int(self.grid_pos[0]), path[0][1] - int(self.grid_pos[1]))
+        else:
+            return self.get_random_direction()
 
     def get_random_direction(self):
         while True:

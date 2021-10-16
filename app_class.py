@@ -21,18 +21,27 @@ class App:
         self.running = True
         self.game_state = 'start_screen'
         self.map = list()
+        self.hearts_pos = list()
         self.enemies = []
         self.heart_number = 0
         self.picked_hearts = 0
+        self.PLAYER_START_POS = (0, 0)
         self.load_level()
-        self.PLAYER_START_POS = vec(self.position_of_symbol(self.map, 'P'))
-        self.ENEMY_START_POS = self.position_of_enemies(5)
+        self.ENEMY_START_POS = self.position_of_enemies(1)
         self.heart_image = self.load_heart_img()
         self.player = Player(self, self.PLAYER_START_POS)
-        self.path = Path(self.map, self.enemies)
+        self.path = Path(self.map, self.enemies, self)
+        for i in range(GRID_WIDTH):
+            for j in range(GRID_HEIGHT):
+                if self.map[i][j] == '0' and random.random() > 0.75:
+                    if self.path.bfs(int(self.PLAYER_START_POS[0]), int(self.PLAYER_START_POS[1]), i, j):
+                        self.map[i][j] = 'h'
+                        self.hearts_pos.append((i, j))
+                        self.heart_number += 1
         self.make_enemies()
         self.frame = 0
         self.t = 0
+        self.firstheartpath = []
 
     def run(self):
         while self.running:
@@ -95,18 +104,15 @@ class App:
             y = randrange(0, GRID_HEIGHT)
             if wall[x][y] != 'W':
                 wall[x][y] = 'W'
-        i = 4
-        item = ['7', '6', '5', 'P']
-        while i > 0:
+        i = 0
+        item = ['P', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+        while i <= NUMBER_OF_ENEMIES:
             x = randrange(0, GRID_WIDTH)
             y = randrange(0, GRID_HEIGHT)
             if wall[x][y] == '0':
-                wall[x][y] = item[i - 1]
-                i -= 1
-        for i in range(GRID_WIDTH):
-            for j in range(GRID_HEIGHT):
-                if wall[i][j] == '0' and random.random() > 0.25:
-                    wall[i][j] = 'h'
+                wall[x][y] = item[i]
+                i += 1
+        self.PLAYER_START_POS = vec(self.position_of_symbol(wall, 'P'))
         self.level = pygame.Surface((MAP_WIDTH, MAP_HEIGHT))
         self.level = pygame.transform.scale(self.level, (MAP_WIDTH, MAP_HEIGHT))
         with open('map1.txt') as level:
@@ -125,11 +131,11 @@ class App:
                 else:
                     self.map[pos[0]][pos[1]] = '0' '''
         self.map = wall
-        self.heart_number = self.count_hearts()
+        #self.heart_number = self.count_hearts()
 
     def make_enemies(self):
         for i in range(NUMBER_OF_ENEMIES):
-            self.enemies.append(Enemy(self, self.ENEMY_START_POS[i], i))
+            self.enemies.append(Enemy(self, self.ENEMY_START_POS[i], i, i % 3))
 
     def grid(self):
         for i in range(28):
@@ -222,35 +228,11 @@ class App:
                     self.path.change_alg()
                     self.t = 0
 
-    def draw_path(self, l):
-        color = [(254, 255, 71), (78, 255, 72), (255, 116, 60)]
+    def draw_enemy_path(self, l):
+        color = [(254, 255, 71), (78, 255, 72), (255, 116, 60), (254, 255, 71), (78, 255, 72), (255, 116, 60), (254, 255, 71), (78, 255, 72), (255, 116, 60)]
         col = 0
         for path in l:
-            for i in range(len(path) - 1):
-                if path[i + 1][0] == (path[i][0] + 1) % GRID_WIDTH:
-                    surf = pygame.Surface((CELL_WIDTH, CELL_HEIGHT // 5))
-                    pygame.Surface.fill(surf, color[col])
-                    self.screen.blit(surf,
-                                     ((path[i][0] + 1/2) * CELL_WIDTH,
-                                      (path[i][1] + 2/5) * CELL_HEIGHT + TOP_BUFFER))
-                elif path[i + 1][1] == (path[i][1] + 1) % GRID_HEIGHT:
-                    surf = pygame.Surface((CELL_WIDTH // 5, CELL_HEIGHT))
-                    pygame.Surface.fill(surf, color[col])
-                    self.screen.blit(surf,
-                                     ((path[i][0] + 2/5) * CELL_WIDTH,
-                                      (path[i][1] + 1/2) * CELL_HEIGHT + TOP_BUFFER))
-                elif path[i + 1][0] == (path[i][0] - 1) % GRID_WIDTH:
-                    surf = pygame.Surface((CELL_WIDTH, CELL_HEIGHT // 5))
-                    pygame.Surface.fill(surf, color[col])
-                    self.screen.blit(surf,
-                                     ((path[i][0] - 1/2) * CELL_WIDTH,
-                                      (path[i][1] + 2/5) * CELL_HEIGHT + TOP_BUFFER))
-                elif path[i + 1][1] == (path[i][1] - 1) % GRID_HEIGHT:
-                    surf = pygame.Surface((CELL_WIDTH // 5, CELL_HEIGHT))
-                    pygame.Surface.fill(surf, color[col])
-                    self.screen.blit(surf,
-                                     ((path[i][0] + 2/5) * CELL_WIDTH,
-                                      (path[i][1] - 1/2) * CELL_HEIGHT + TOP_BUFFER))
+            self.draw_path(path, color[col])
             col += 1
 
         '''for i in path:
@@ -262,7 +244,44 @@ class App:
                                                           CELL_HEIGHT * i[1],
                                                           CELL_WIDTH, CELL_HEIGHT))'''
 
+    def draw_path(self, path, color):
+        for i in range(len(path) - 1):
+            if path[i + 1][0] == (path[i][0] + 1) % GRID_WIDTH:
+                surf = pygame.Surface((CELL_WIDTH, CELL_HEIGHT // 5))
+                pygame.Surface.fill(surf, color)
+                self.screen.blit(surf,
+                                 ((path[i][0] + 1 / 2) * CELL_WIDTH,
+                                  (path[i][1] + 2 / 5) * CELL_HEIGHT + TOP_BUFFER))
+            elif path[i + 1][1] == (path[i][1] + 1) % GRID_HEIGHT:
+                surf = pygame.Surface((CELL_WIDTH // 5, CELL_HEIGHT))
+                pygame.Surface.fill(surf, color)
+                self.screen.blit(surf,
+                                 ((path[i][0] + 2 / 5) * CELL_WIDTH,
+                                  (path[i][1] + 1 / 2) * CELL_HEIGHT + TOP_BUFFER))
+            elif path[i + 1][0] == (path[i][0] - 1) % GRID_WIDTH:
+                surf = pygame.Surface((CELL_WIDTH, CELL_HEIGHT // 5))
+                pygame.Surface.fill(surf, color)
+                self.screen.blit(surf,
+                                 ((path[i][0] - 1 / 2) * CELL_WIDTH,
+                                  (path[i][1] + 2 / 5) * CELL_HEIGHT + TOP_BUFFER))
+            elif path[i + 1][1] == (path[i][1] - 1) % GRID_HEIGHT:
+                surf = pygame.Surface((CELL_WIDTH // 5, CELL_HEIGHT))
+                pygame.Surface.fill(surf, color)
+                self.screen.blit(surf,
+                                 ((path[i][0] + 2 / 5) * CELL_WIDTH,
+                                  (path[i][1] - 1 / 2) * CELL_HEIGHT + TOP_BUFFER))
+
     def playing_update(self):
+        if not self.firstheartpath:
+            self.firstheartpath = self.path.astar(self.map,
+                                                  (int(self.player.grid_pos[0]), int(self.player.grid_pos[1])),
+                                                  self.hearts_pos[random.randrange(0, len(self.hearts_pos))])
+            self.firstheartpath.pop(0)
+        x = int(self.player.grid_pos[0]) - self.firstheartpath[0][0]
+        y = int(self.player.grid_pos[1]) - self.firstheartpath[0][1]
+        if self.player.can_move(vec(-x, -y)):
+            self.player.move(vec(-x, -y))
+
         self.player.update()
         for i in range(NUMBER_OF_ENEMIES):
             self.enemies[i].update()
@@ -285,7 +304,8 @@ class App:
         self.make_level()
         self.grid()
         self.draw_hearts()
-        self.draw_path(self.path.st)
+        #self.draw_enemy_path(self.path.st)
+        self.draw_path(self.firstheartpath, (255, 138, 120))
         self.player.draw(int(self.frame))
         for i in range(NUMBER_OF_ENEMIES):
             self.enemies[i].draw()
