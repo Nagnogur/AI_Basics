@@ -1,4 +1,6 @@
 import pygame
+
+from helper import *
 from settings import *
 from pygame.math import Vector2 as vec
 import random
@@ -20,8 +22,8 @@ class Enemy:
         self.id = enemy_id
         self.grid_pos = pos
         self.enemy_class = enemy_class
-        self.pixel_pos = vec(self.grid_pos.x * CELL_WIDTH - ENEMY_X_INDENT,
-                             self.grid_pos.y * CELL_HEIGHT + TOP_BUFFER - ENEMY_Y_INDENT)
+        self.pixel_pos = vec(self.grid_pos[0] * CELL_WIDTH - ENEMY_X_INDENT,
+                             self.grid_pos[1] * CELL_HEIGHT + TOP_BUFFER - ENEMY_Y_INDENT)
         self.sprite_sheet = ENEMY_SPRITES[self.enemy_class]
         self.dir = vec(0, 0)
         self.speed = 1
@@ -59,18 +61,18 @@ class Enemy:
         return False
 
     def move(self):
-        if self.enemy_class == 0:
-            self.dir = self.to_player_position()
-        elif self.enemy_class == 1:
-            self.dir = self.long_path_to_player()
-        elif self.enemy_class == 2:
-            self.dir = self.behind_player_position()
+        if self.enemy_class % 2 == 0:
+            self.dir = self.to_player_position(player_pos(self.app.player))
+            '''elif self.enemy_class == 19:
+                self.dir = self.long_path_to_player()
+            elif self.enemy_class == 2:
+                self.dir = self.to_player_position()'''
         else:
             self.dir = self.get_random_direction()
 
-    def to_player_position(self):
+    def to_player_position(self, goal):
         path = self.app.path.start_bfs(int(self.grid_pos[0]), int(self.grid_pos[1]),
-                                       int(self.app.player.grid_pos[0]), int(self.app.player.grid_pos[1]),
+                                       goal[0], goal[1],
                                        self.id)
         if len(path) > 1:
             path.pop(0)
@@ -78,7 +80,7 @@ class Enemy:
         else:
             return self.get_random_direction()
 
-    def behind_player_position(self):
+    '''def behind_player_position(self):
         path = self.app.path.astar(self.app.map, (int(self.grid_pos[0]), int(self.grid_pos[1])),
                                    (int(self.app.player.grid_pos[0]), int(self.app.player.grid_pos[1])))
         if path is not None and len(path) > 1:
@@ -93,10 +95,9 @@ class Enemy:
 
         if len(path) > 1:
             path.pop(0)
-            print(path[0])
             return vec(path[0][0] - int(self.grid_pos[0]), path[0][1] - int(self.grid_pos[1]))
         else:
-            return self.get_random_direction()
+            return self.get_random_direction()'''
 
     def get_random_direction(self):
         while True:

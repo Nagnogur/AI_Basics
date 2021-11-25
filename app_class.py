@@ -1,3 +1,4 @@
+from datetime import *
 import sys
 import time
 from random import randrange
@@ -8,6 +9,7 @@ from player import *
 import numpy as np
 from enemy import *
 from path import *
+from minimax import *
 
 pygame.init()
 pygame.display.set_caption("Terra-Man")
@@ -19,7 +21,7 @@ class App:
         self.screen = pygame.display.set_mode((APP_WIDTH, APP_HEIGHT))
         self.clock = pygame.time.Clock()
         self.running = True
-        self.game_state = 'start_screen'
+        self.game_state = 'playing'
         self.map = list()
         self.hearts_pos = list()
         self.enemies = []
@@ -31,17 +33,14 @@ class App:
         self.heart_image = self.load_heart_img()
         self.player = Player(self, self.PLAYER_START_POS)
         self.path = Path(self.map, self.enemies, self)
-        for i in range(GRID_WIDTH):
-            for j in range(GRID_HEIGHT):
-                if self.map[i][j] == '0' and random.random() > 0.75:
-                    if self.path.bfs(int(self.PLAYER_START_POS[0]), int(self.PLAYER_START_POS[1]), i, j):
-                        self.map[i][j] = 'h'
-                        self.hearts_pos.append((i, j))
-                        self.heart_number += 1
         self.make_enemies()
         self.frame = 0
         self.t = 0
         self.firstheartpath = []
+        self.moves = 0
+        self.next_hearth = self.hearts_pos[random.randrange(0, len(self.hearts_pos))]
+        self.minimax = Minimax()
+        self.time = datetime.now()
 
     def run(self):
         while self.running:
@@ -90,8 +89,8 @@ class App:
         return pos
 
     def load_level(self):
-        # self.level = pygame.image.load("map.png")
-        wall = [['0' for i in range(GRID_HEIGHT)] for j in range(GRID_WIDTH)]
+        #.level = pygame.image.load("map.png")
+        '''wall = [['0' for i in range(GRID_HEIGHT)] for j in range(GRID_WIDTH)]
         for i in range(GRID_WIDTH):
             wall[i][0] = 'W'
             wall[i][GRID_HEIGHT - 1] = 'W'
@@ -111,8 +110,8 @@ class App:
             y = randrange(0, GRID_HEIGHT)
             if wall[x][y] == '0':
                 wall[x][y] = item[i]
-                i += 1
-        self.PLAYER_START_POS = vec(self.position_of_symbol(wall, 'P'))
+                i += 1'''
+
         self.level = pygame.Surface((MAP_WIDTH, MAP_HEIGHT))
         self.level = pygame.transform.scale(self.level, (MAP_WIDTH, MAP_HEIGHT))
         with open('map1.txt') as level:
@@ -123,6 +122,8 @@ class App:
                     r.append(char)
                 self.map.append(r)
         self.map = np.array(self.map).T.tolist()
+
+        self.PLAYER_START_POS = vec(self.position_of_symbol(self.map, 'P'))
         '''for i in range(100):
             pos = (randrange(0, GRID_WIDTH), randrange(0, GRID_HEIGHT))
             if self.map[pos[0]][pos[1]] not in ['P', '5', '6', '7']:
@@ -130,8 +131,26 @@ class App:
                     self.map[pos[0]][pos[1]] = 'W'
                 else:
                     self.map[pos[0]][pos[1]] = '0' '''
-        self.map = wall
+        #self.map = wall
         #self.heart_number = self.count_hearts()
+        for i in range(GRID_WIDTH):
+            for j in range(GRID_HEIGHT):
+                if self.map[i][j] == 'h':
+                    self.hearts_pos.append((i, j))
+                    self.heart_number += 1
+
+    def load_level_from_txt(self):
+        self.level = pygame.image.load("map.png")
+        self.level = pygame.transform.scale(self.level, (MAP_WIDTH, MAP_HEIGHT))
+        with open('map1.txt') as level:
+            for row in level:
+                row = row.strip()
+                r = []
+                for char in row:
+                    r.append(char)
+                self.map.append(r)
+        self.map = np.array(self.map).T.tolist()
+        self.heart_number = self.count_hearts()
 
     def make_enemies(self):
         for i in range(NUMBER_OF_ENEMIES):
@@ -245,6 +264,8 @@ class App:
                                                           CELL_WIDTH, CELL_HEIGHT))'''
 
     def draw_path(self, path, color):
+        if path is None:
+            return
         for i in range(len(path) - 1):
             if path[i + 1][0] == (path[i][0] + 1) % GRID_WIDTH:
                 surf = pygame.Surface((CELL_WIDTH, CELL_HEIGHT // 5))
@@ -272,24 +293,46 @@ class App:
                                   (path[i][1] - 1 / 2) * CELL_HEIGHT + TOP_BUFFER))
 
     def playing_update(self):
-        if not self.firstheartpath:
-            self.firstheartpath = self.path.astar(self.map,
-                                                  (int(self.player.grid_pos[0]), int(self.player.grid_pos[1])),
-                                                  self.hearts_pos[random.randrange(0, len(self.hearts_pos))])
-            self.firstheartpath.pop(0)
-        x = int(self.player.grid_pos[0]) - self.firstheartpath[0][0]
-        y = int(self.player.grid_pos[1]) - self.firstheartpath[0][1]
-        if self.player.can_move(vec(-x, -y)):
-            self.player.move(vec(-x, -y))
-
-        self.player.update()
-        for i in range(NUMBER_OF_ENEMIES):
-            self.enemies[i].update()
-            if self.enemies[i].grid_pos == self.player.grid_pos:
-                self.game_state = 'game over'
-                return
         if self.picked_hearts == self.heart_number:
             self.game_state = 'victory'
+
+        #if not self.firstheartpath:
+
+        # MAKE THIS IN PLAYER CLASS (LIST OF DIRECTIONS)
+        '''if self.moves == 0:
+            position = Position(self, self.map, player_pos(self.player), self.enemies, self.heart_number,
+                                self.picked_hearts, False)
+            self.minimax.best_pos = []
+            self.minimax.minimax(0, True, position, 1000, -1000, [position.player_position])
+            self.minimax.best_pos.pop(0)
+            self.moves = (self.moves + 1) % 20
+        print(self.minimax.best_pos)
+        print(player_pos(self.player))
+        if self.minimax.best_pos:
+            x = int(self.player.grid_pos[0]) - self.minimax.best_pos[0][0]
+            y = int(self.player.grid_pos[1]) - self.minimax.best_pos[0][1]
+            if self.player.can_move(vec(-x, -y)):
+                self.player.move(vec(-x, -y))
+                self.moves = (self.moves + 1) % 20'''
+        # -------------------------
+        '''self.firstheartpath = self.path.astar(self.map,
+                                              (int(self.player.grid_pos[0]), int(self.player.grid_pos[1])),
+                                              self.next_hearth)
+        if self.firstheartpath is not None:
+            self.firstheartpath.pop(0)
+        # -------------------------------
+        if self.firstheartpath is not None:
+            x = int(self.player.grid_pos[0]) - self.firstheartpath[0][0]
+            y = int(self.player.grid_pos[1]) - self.firstheartpath[0][1]
+            if self.player.can_move(vec(-x, -y)):
+                self.player.move(vec(-x, -y))'''
+        self.player.update()
+        for i in self.enemies:
+            i.update()
+            if i.grid_pos == self.player.grid_pos:
+                self.game_state = 'game over'
+                return
+
         start = time.time()
         self.path.find_path(int(self.player.grid_pos[0]), int(self.player.grid_pos[1]))
         self.t = max(time.time() - start, self.t)
@@ -321,9 +364,13 @@ class App:
         pygame.display.update()
 
     def victory_events(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                self.running = False
+        time2 = datetime.now() - self.time
+        f = open("results.txt", "a")
+        f.write("\nvictory, " + str(time2.total_seconds()) + ", " + str(self.picked_hearts) + ", expectimax")
+        f.close()
+        '''for event in pygame.event.get():
+            if event.type == pygame.QUIT:'''
+        self.running = False
 
     def game_over_draw(self):
         self.screen.fill((0, 0, 0))
@@ -333,6 +380,10 @@ class App:
         pygame.display.update()
 
     def game_over_events(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                self.running = False
+        time2 = datetime.now() - self.time
+        f = open("results.txt", "a")
+        f.write("\ndefeat, " + str(time2.total_seconds()) + ", " + str(self.picked_hearts) + ", expectimax")
+        f.close()
+        '''for event in pygame.event.get():
+            if event.type == pygame.QUIT:'''
+        self.running = False
