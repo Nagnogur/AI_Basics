@@ -1,0 +1,7 @@
+result,time,algorithm,score,predicted
+defeat,44.06186,expectimax,78,96
+defeat,47.408018,expectimax,83,99
+defeat,71.819461,expectimax,138,125
+defeat,158.62747,minimax,210,220
+defeat,49.710321,minimax,100,105
+defeat,53.519742,minimax,130,109
